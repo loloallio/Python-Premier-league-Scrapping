@@ -34,8 +34,8 @@
 
 
 ## Usage
-First. Run the "Premier League.py" to gather all the links
-Second. Run the "Premier League2.py" to create the data sets
+First. Run the "Premier League.py" to gather all the links.
+Finally, run the "Premier League2.py" to create the data sets
 
 
 ## Room for Improvement
