@@ -50,13 +50,11 @@ with open('links.txt', 'r', encoding='utf-8') as links:
         time.sleep(1)
         cookies = WebDriverWait(driver, 10).until(
             EC.element_to_be_clickable((By.XPATH,
-                                        "/html/body[@class='_3UeHq9yHsrBMeynzByHRY0']/div[@class='tcf-cmp "
-                                        "_1Qu7MokjMuBXLOM2oKVLhZ _3_H6MsAd1grAO7T3v2WdhQ']/div["
-                                        "@class='_2Mguj83Bz7C9Eq14DJizIM']/div["
-                                        "@class='_90RzEeyM6H7IvIh291DTv']/div["
-                                        "@class='_1QkG3L-zAijqYlFASTvCtT']/div["
-                                        "@class='_24Il51SkQ29P1pCkJOUO-7']/button[@class='_2hTJ5th4dIYlveipSEMYHH "
-                                        "BfdVlAo_cgSVjDUegen0F js-accept-all-close']")))
+                                        "/html/body/div[@id='onetrust-consent-sdk']/div["
+                                        "@id='onetrust-banner-sdk']/div[@class='ot-sdk-container']/div["
+                                        "@class='ot-sdk-row']/div[@id='onetrust-button-group-parent']/div["
+                                        "@id='onetrust-button-group']/div[@class='banner-actions-container']/button["
+                                        "@id='onetrust-accept-btn-handler']")))
         driver.execute_script("arguments[0].click();", cookies)
         time.sleep(1)
 
