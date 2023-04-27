@@ -31,7 +31,7 @@ pgdown = driver.find_element(By.XPATH, "/html/body/footer[@class='mainFooter']/d
 pgdown.send_keys(Keys.END)
 pgdown.send_keys(Keys.PAGE_UP)
 pgdown.send_keys(Keys.END)
-time.sleep(2)
+time.sleep(5)
 pgsour = driver.page_source
 
 pattern = re.findall(r'www.premierleague.com/match/\d*', pgsour)
