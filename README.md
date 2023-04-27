@@ -44,5 +44,5 @@ I believe the scrapping can be done faster by finding a way to omit the usage of
 
 
 ## Contact
-Created by Lorenzo Allio. I'm a Data science university student looking for its first data scientist jr position feel fre to contact me www.linkedin.com/in/lorenzo-allio/
+Created by Lorenzo Allio. I'm a Data science university student looking for its first data scientist jr position. Feel free to contact me www.linkedin.com/in/lorenzo-allio/
 
