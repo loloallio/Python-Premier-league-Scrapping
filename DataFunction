@@ -1,0 +1,116 @@
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+import time
+import Clickmatch as CMTCH
+import pandas as pd
+
+# Creation of CSVMatches
+ColumnsMatch = ['Match', 'date', 'referee', 'stadium', 'Attendance', 'HOME', 'Fulltime_Score', 'Visit',
+                'Halftime_score',
+                'Kickoff', 'MOTM']
+DF_Match_ORIGIN = pd.DataFrame(columns=ColumnsMatch)
+
+# Creation of CSVGoals
+ColumnsGoals = ['ID_Goal', 'ID_Match', 'Time', 'Team', 'Player', 'Own_Goal', 'Penalty', 'Assistant']
+
+# Creation of CSVFouls
+ColumnsFouls = ['ID_Foul', 'Time', 'Player', 'Team', 'ID_Match']
+
+# Creation of CSVCards
+ColumnsCards = ['ID_Foul', 'ID_Match', 'Time', 'Player', 'Team', 'Type']
+
+# Creation of CSVSubstitutions
+ColumnsSubs = ['ID_Sub', 'ID_Match', 'Time', 'Team', 'In_player', 'Out_player']
+
+
+def data_creation(file):
+    with open(f'{file}.txt', 'r', encoding='utf-8') as links:
+        DataMatchRet = []
+        DataGoal = []
+        DataFoul = []
+        DataCards = []
+        DataSubs = []
+        for i in links:
+            DataMatch = []
+            driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
+
+            driver.get(f'https://{i.rstrip()}')
+            time.sleep(1)
+            cookies = WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable((By.XPATH,
+                                            "/html/body/div[@id='onetrust-consent-sdk']/div["
+                                            "@id='onetrust-banner-sdk']/div[@class='ot-sdk-container']/div["
+                                            "@class='ot-sdk-row']/div[@id='onetrust-button-group-parent']/div["
+                                            "@id='onetrust-button-group']/div["
+                                            "@class='banner-actions-container']/button["
+                                            "@id='onetrust-accept-btn-handler']")))
+            driver.execute_script("arguments[0].click();", cookies)
+            time.sleep(1)
+
+            pgdown = driver.find_element(By.XPATH, "/html/body/footer[@class='mainFooter']/div["
+                                                   "@class='footerCorporate']/div[@class='wrapper col-12']/ul/li[4]/a")
+
+            pgdown.send_keys(Keys.END)
+            pgdown.send_keys(Keys.PAGE_UP)
+            pgdown.send_keys(Keys.END)
+            time.sleep(1)
+            pgsour = driver.page_source.split('\n')
+
+            Match_ID = (i[28:].strip())
+            DataMatch.append(Match_ID)
+            counter1 = 0
+            for j in pgsour:
+                if 'matchDate renderMatchDateContainer' in j:
+                    DataMatch.append(CMTCH.get_date(j))
+                elif 'icn whistle-w' in j:
+                    DataMatch.append(CMTCH.get_referee(j))
+                elif 'icn stadium-w' in j:
+                    DataMatch.append(CMTCH.get_stadium(j))
+                elif 'attendance hide-m' in j:
+                    DataMatch.append(CMTCH.get_attendance(j))
+                elif '<div class="kickoff">Kick Off: <strong class="renderKOContainer"' in j:
+                    DataMatch.append(CMTCH.get_kickoff(j))
+                elif '<span class="long">' in j:
+                    if 'Half Time' not in j:
+                        DataMatch.append(CMTCH.get_teams(j))
+                    else:
+                        counter1 += 1
+                elif counter1 == 1:
+                    DataMatch.append(CMTCH.get_score(j))
+                    counter1 = 0
+                elif 'score fullTime' in j:
+                    DataMatch.append(CMTCH.get_score(j))
+                elif '<div class="js-content">' in j:
+                    try:
+                        DataMatch.append(CMTCH.get_motm(j))
+                    except:
+                        DataMatch.append("")
+                elif 'commentaryContainer' in j:
+
+                    # Adds info to Goals
+                    Teams2 = CMTCH.get_teams2(j)
+                    DataGoal.extend(CMTCH.get_goal(j, Match_ID, Teams2))
+
+                    # Adds info to Cards
+                    DataCards.extend(
+                        CMTCH.all_cards(CMTCH.get_yellow_cards(j), CMTCH.get_red_card(j), Match_ID))
+
+                    # Adds info to Fouls
+                    DataFoul.extend((CMTCH.get_fouls(j, Match_ID)))
+
+                    # Adds info to Subs
+                    DataSubs.extend((CMTCH.get_substitutions(j, Match_ID)))
+
+                    # Adds info to Match
+                    if len(DataMatch) == 10:
+                        DataMatch.insert(4, "")
+                        DataMatchRet.append(DataMatch)
+                    else:
+                        DataMatchRet.append(DataMatch)
+
+    return [DataGoal, DataCards, DataFoul, DataSubs, DataMatchRet]
