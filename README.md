@@ -13,7 +13,8 @@
 ## General Information
 - The project is based on the official premier league website "www.premierleague.com". 
 - First, it gathers every link from its results section and finally iterates every link extracting the required information.
-- 5 different data sets are created in a csv format. Matches, Goals, Fouls, Cards and Subs. 
+- 5 different data sets are created in a csv format. Matches, Goals, Fouls, Cards and Subs.
+- An snowflake database is created. Every datasets connects with "Matches" with ID_Match 
 
 
 ## Python libraries
