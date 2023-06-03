@@ -1,14 +1,6 @@
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-import time
-import Clickmatch as CMTCH
+import DataFunction as DataFunc
+from save_thread_result import ThreadWithResult
 import pandas as pd
-
 
 # Creation of CSVMatches
 ColumnsMatch = ['Match', 'date', 'referee', 'stadium', 'Attendance', 'HOME', 'Fulltime_Score', 'Visit',
@@ -37,94 +29,59 @@ ColumnsSubs = ['ID_Sub', 'ID_Match', 'Time', 'Team', 'In_player', 'Out_player']
 DF_SUBS_ORIGIN = pd.DataFrame(columns=ColumnsSubs)
 DF_SUBS_ORIGIN.to_csv('SUBS.csv', index=False, header=True)
 
-with open('links.txt', 'r', encoding='utf-8') as links:
-    for i in links:
-        DataMatch = []
-        DataGoal = []
-        DataFoul = []
-        DataCards = []
-        DataSubs = []
-        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
+thread1 = ThreadWithResult(
+    target=DataFunc.data_creation,
+    args=('links1',))
 
-        driver.get(f'https://{i.rstrip()}')
-        time.sleep(1)
-        cookies = WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.XPATH,
-                                        "/html/body/div[@id='onetrust-consent-sdk']/div["
-                                        "@id='onetrust-banner-sdk']/div[@class='ot-sdk-container']/div["
-                                        "@class='ot-sdk-row']/div[@id='onetrust-button-group-parent']/div["
-                                        "@id='onetrust-button-group']/div[@class='banner-actions-container']/button["
-                                        "@id='onetrust-accept-btn-handler']")))
-        driver.execute_script("arguments[0].click();", cookies)
-        time.sleep(1)
+thread2 = ThreadWithResult(
+    target=DataFunc.data_creation,
+    args=('links2',))
 
-        pgdown = driver.find_element(By.XPATH, "/html/body/footer[@class='mainFooter']/div["
-                                               "@class='footerCorporate']/div[@class='wrapper col-12']/ul/li[4]/a")
+thread3 = ThreadWithResult(
+    target=DataFunc.data_creation,
+    args=('links3',))
 
-        pgdown.send_keys(Keys.END)
-        pgdown.send_keys(Keys.PAGE_UP)
-        pgdown.send_keys(Keys.END)
-        time.sleep(1)
-        pgsour = driver.page_source.split('\n')
+thread4 = ThreadWithResult(
+    target=DataFunc.data_creation,
+    args=('links4',))
 
-        Match_ID = (i[28:].strip())
-        DataMatch.append(Match_ID)
-        counter1 = 0
-        for j in pgsour:
-            if 'matchDate renderMatchDateContainer' in j:
-                DataMatch.append(CMTCH.get_date(j))
-            elif 'icn whistle-w' in j:
-                DataMatch.append(CMTCH.get_referee(j))
-            elif 'icn stadium-w' in j:
-                DataMatch.append(CMTCH.get_stadium(j))
-            elif 'attendance hide-m' in j:
-                DataMatch.append(CMTCH.get_attendance(j))
-            elif '<div class="kickoff">Kick Off: <strong class="renderKOContainer"' in j:
-                DataMatch.append(CMTCH.get_kickoff(j))
-            elif '<span class="long">' in j:
-                if 'Half Time' not in j:
-                    DataMatch.append(CMTCH.get_teams(j))
-                else:
-                    counter1 += 1
-            elif counter1 == 1:
-                DataMatch.append(CMTCH.get_score(j))
-                counter1 = 0
-            elif 'score fullTime' in j:
-                DataMatch.append(CMTCH.get_score(j))
-            elif '<div class="js-content">' in j:
-                try:
-                    DataMatch.append(CMTCH.get_motm(j))
-                except:
-                    DataMatch.append("")
-            elif 'commentaryContainer' in j:
+thread5 = ThreadWithResult(
+    target=DataFunc.data_creation,
+    args=('links5',))
 
-                # Adds info to Goals
-                Teams2 = CMTCH.get_teams2(j)
-                DataGoal.append(CMTCH.get_goal(j, Match_ID, Teams2))
-                DFGoal = pd.DataFrame(DataGoal[0], columns=ColumnsGoals)
-                DFGoal.to_csv('GOALS.csv', index=False, header=False, mode='a')
+thread1.start()
+thread2.start()
+thread3.start()
+thread4.start()
+thread5.start()
 
-                # Adds info to Cards
-                DataCards.append(
-                    CMTCH.all_cards(CMTCH.get_yellow_cards(j), CMTCH.get_red_card(j), Match_ID))
-                DfCards = pd.DataFrame(DataCards[0], columns=ColumnsCards)
-                DfCards.to_csv('CARDS.csv', index=False, header=False, mode='a')
+thread1.join()
+thread2.join()
+thread3.join()
+thread4.join()
+thread5.join()
 
-                # Adds info to Fouls
-                DataFoul.append((CMTCH.get_fouls(j, Match_ID)))
-                DfFouls = pd.DataFrame(DataFoul[0], columns=ColumnsFouls)
-                DfFouls.to_csv('FOULS.csv', index=False, header=False, mode='a')
+ResultsLinks = [thread1.result, thread2.result, thread3.result, thread4.result, thread5.result]
 
-                # Adds info to Subs
-                DataSubs.append((CMTCH.get_substitutions(j, Match_ID)))
-                DfSubs = pd.DataFrame(DataSubs[0], columns=ColumnsSubs)
-                DfSubs.to_csv('SUBS.csv', index=False, header=False, mode='a')
+# data into csv
 
-        # Adds info to CSV-MATCHES
-        try:
-            TemporaryDF = pd.DataFrame([DataMatch], columns=ColumnsMatch)
-            TemporaryDF.to_csv('MATCHES.csv', index=False, header=False, mode='a')
-        except:
-            DataMatch.insert(4, '')
-            TemporaryDF = pd.DataFrame([DataMatch], columns=ColumnsMatch)
-            TemporaryDF.to_csv('MATCHES.csv', index=False, header=False, mode='a')
+for Match in ResultsLinks:
+    # Goals
+    DF_GOLES = pd.DataFrame(Match[0], columns=ColumnsGoals)
+    DF_GOLES.to_csv('GOALS.csv', index=False, header=False, mode='a')
+
+    # CARDS
+    DF_TARJETAS = pd.DataFrame(Match[1], columns=ColumnsCards)
+    DF_TARJETAS.to_csv('CARDS.csv', index=False, header=False, mode='a')
+
+    # FOULS
+    DF_FALTAS = pd.DataFrame(Match[2], columns=ColumnsFouls)
+    DF_FALTAS.to_csv('FOULS.csv', index=False, header=False, mode='a')
+
+    # SUBS
+    DF_SUSTITUCIONES = pd.DataFrame(Match[3], columns=ColumnsSubs)
+    DF_SUSTITUCIONES.to_csv('SUBS.csv', index=False, header=False, mode='a')
+
+    # MATCH
+    DF_PARTIDO = pd.DataFrame(Match[4], columns=ColumnsMatch)
+    DF_PARTIDO.to_csv('MATCHES.csv', index=False, header=False, mode='a')
