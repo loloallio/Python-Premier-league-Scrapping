@@ -22,6 +22,7 @@
 - Selenium (By, Keys, Service, WebDriverWait, expected_conditions)
 - Time
 - Web Driver (ChromeDriverManager)
+- save_thread_result
 
 
 ## Data Sets
