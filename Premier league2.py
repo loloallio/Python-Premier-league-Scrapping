@@ -3,7 +3,7 @@ from save_thread_result import ThreadWithResult
 import pandas as pd
 
 # Creation of CSVMatches
-ColumnsMatch = ['Match', 'date', 'referee', 'stadium', 'Attendance', 'HOME', 'Fulltime_Score', 'Visit',
+ColumnsMatch = ['Match', 'date', 'referee', 'stadium', 'Attendance', 'HOME', 'Fulltime_Score', 'AWAY',
                 'Halftime_score',
                 'Kickoff', 'MOTM']
 DF_Match_ORIGIN = pd.DataFrame(columns=ColumnsMatch)
